@@ -49,6 +49,8 @@
 
   *{box-sizing:border-box;}
   body{margin:0; background:var(--paper); color:var(--ink); font-family:"Source Sans 3", ui-sans-serif, system-ui, sans-serif; font-size:14px; line-height:1.5;}
+  html, body{height:100%;}
+  #bodyShell{height:100%;}
   img{max-width:100%;}
   [hidden]{display:none !important;}
   ::selection{background:var(--accent-soft); color:var(--accent-ink);}
@@ -56,7 +58,7 @@
   a{color:var(--accent);}
   h1,h2,h3{font-family:"Fraunces", Georgia, serif; text-wrap:balance; margin:0;}
 
-  .wrap{max-width:1180px; margin:0 auto; padding:28px 24px 64px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 24px 24px; height:100%; display:flex; flex-direction:column; min-height:0;}
 
   .topbar{display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:22px;}
   .brand{display:flex; align-items:baseline; gap:10px;}
@@ -110,18 +112,25 @@
   .count-line{color:var(--muted); font-size:12.5px; margin:2px 0 14px;}
   .list-header{
     display:grid; grid-template-columns: 96px 1.35fr 108px 118px 108px 92px 110px 92px 28px 22px;
-    align-items:end; gap:10px; padding:0 14px; margin-bottom:6px;
+    align-items:end; gap:10px; padding:0 14px; margin-bottom:6px; scrollbar-gutter:stable;
     color:var(--muted); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
   }
   .list-header .lh-right{text-align:right;}
   @media (max-width:920px){ .list-header{display:none;} }
+  @media (max-width:920px), (max-height:520px){
+    html, body, #bodyShell{height:auto;}
+    .wrap{height:auto; display:block; padding-bottom:64px;}
+    .list{flex:none; min-height:0; overflow-y:visible; padding:0; scrollbar-gutter:auto;}
+  }
   .group-divider{
     display:flex; align-items:center; gap:10px; color:var(--muted); font-size:11px; font-weight:700;
     text-transform:uppercase; letter-spacing:.06em; margin:14px 2px 2px;
   }
   .group-divider::after{content:""; flex:1; height:1px; background:var(--line);}
 
-  .list{display:flex; flex-direction:column; gap:8px;}
+  .list{display:flex; flex-direction:column; gap:8px;
+    flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain;
+    padding:2px 4px 12px 2px; scrollbar-gutter:stable;}
   .event{
     background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--line);
     border-radius:9px; box-shadow:var(--shadow);
