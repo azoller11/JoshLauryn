@@ -249,7 +249,7 @@
       </div>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
-      <button class="btn-secondary" id="settingsBtn" type="button" title="GitHub connection settings">⚙ GitHub</button>
+      <!--<button class="btn-secondary" id="settingsBtn" type="button" title="GitHub connection settings">⚙ GitHub</button>-->
       <button class="add-btn" id="addBtn" type="button">+ Add event</button>
     </div>
   </div>
@@ -962,11 +962,11 @@
   var connectBackdrop = document.getElementById("connectBackdrop");
   function openConnectModal(){
     var cfg = ghConfig || {};
-    document.getElementById("cfgOwner").value = cfg.owner || "";
-    document.getElementById("cfgRepo").value = cfg.repo || "";
+    document.getElementById("cfgOwner").value = cfg.owner || "azoller11";
+    document.getElementById("cfgRepo").value = cfg.repo || "JoshLauryn";
     document.getElementById("cfgBranch").value = cfg.branch || "main";
     document.getElementById("cfgPath").value = cfg.path || "booking-board_3.html";
-    document.getElementById("cfgToken").value = cfg.token || "";
+    document.getElementById("cfgToken").value = cfg.token || "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";
     connectBackdrop.classList.add("open");
   }
   function closeConnectModal(){
