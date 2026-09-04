@@ -1,5 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Twist Booking Board</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style id="app-style">
   :root{
     /* Brand palette: Background #1D1D1D · Foreground #EFEAE6 · Accents #B3D6D3 / #C7DDD9 / #DBE3E0 */
@@ -237,6 +243,8 @@
     .field.wide{grid-column:span 2;}
   }
 </style>
+</head>
+<body>
 
 <div id="bodyShell">
 <div class="wrap">
@@ -319,7 +327,7 @@
 </div>
 </div>
 
-<script type="application/json" id="event-data">[{"id":"cary-feldman","name":"Cary Feldman","phone":"","email":"","date":"2024-11-15","start":null,"end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":400.0,"depositStatus":"Sent","depositAmount":50.0,"location":"Scottsdale AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"marta-reus","name":"Marta Reus","phone":"","email":"","date":"2024-12-07","start":null,"end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":700.0,"depositStatus":"Sent","depositAmount":50.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"briana-wellington","name":"Briana Wellington","phone":"","email":"","date":"2024-12-15","start":null,"end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":50.0,"location":"Chandler AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"darlene-franciosa","name":"Darlene Franciosa","phone":"","email":"","date":"2025-01-04","start":null,"end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":400.0,"depositStatus":"Not Required","depositAmount":0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"lauren-dahl","name":"Lauren Dahl","phone":"","email":"","date":"2025-02-04","start":"17:30","end":"20:00","durationHrs":null,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"North Scottsdale","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"emily-ullrich","name":"Emily Ullrich","phone":"","email":"","date":"2025-02-07","start":"17:30","end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":550.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"silpa-reddy","name":"Silpa Reddy","phone":"","email":"","date":"2025-02-08","start":"18:30","end":null,"durationHrs":2.0,"status":"Complete","boothType":"360","prints":"No","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"sasha-garcia","name":"Sasha Garcia","phone":"","email":"","date":"2025-02-22","start":"16:00","end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":350.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Avondale AZ","staff":"","equipment":"They have their own backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"alison-edelstein","name":"Alison Edelstein","phone":"","email":"","date":"2025-02-22","start":"05:00","end":null,"durationHrs":null,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"black backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"josh-hipps","name":"Josh Hipps","phone":"","email":"","date":"2025-03-01","start":"08:00","end":null,"durationHrs":3.0,"status":"Complete","boothType":"Both","prints":"No","price":1150.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Sun City AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Want to do greatest showman theme, needs us there by 7 to have everything set up by 7:30.","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"the-frost-event","name":"The frost event","phone":"","email":"","date":"2025-03-08","start":null,"end":null,"durationHrs":null,"status":"Complete","boothType":"White","prints":"Yes","price":null,"depositStatus":"","depositAmount":null,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"rachel-locker","name":"Rachel Locker","phone":"","email":"","date":"2025-03-14","start":"18:30","end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":400.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Will let us know in 2 weeks from 1/19 if they want to book","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"shawntel-brian-goodwin","name":"Shawntel&Brian Goodwin","phone":"","email":"","date":"2025-03-15","start":"15:30","end":null,"durationHrs":3.0,"status":"Complete","boothType":"360","prints":"No","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Surprise AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"carlos-rosales","name":"Carlos Rosales","phone":"","email":"","date":"2025-03-22","start":"06:00","end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Gilbert AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"alex-s-friend-event","name":"Alex's friend event","phone":"","email":"","date":"2025-03-29","start":null,"end":null,"durationHrs":null,"status":"Cancelled","boothType":"White","prints":"Yes","price":200.0,"depositStatus":"Not Required","depositAmount":0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"elizabeth-marzeleno","name":"Elizabeth Marzeleno","phone":"","email":"","date":"2025-03-29","start":null,"end":null,"durationHrs":null,"status":"Cancelled","boothType":"","prints":"","price":null,"depositStatus":"Not Sent","depositAmount":100.0,"location":"West Phoenix","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Said she would talk to her husband and get back to us. This is for a birthday party, she just wanted to do something special.; Original duration entry: Couple hours....","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"sierra-lopez","name":"Sierra Lopez","phone":"","email":"","date":"2025-04-05","start":"07:00","end":null,"durationHrs":3.0,"status":"Cancelled","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Not Sent","depositAmount":100.0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"stacey-voss","name":"Stacey Voss","phone":"","email":"","date":"2025-04-09","start":"04:30","end":null,"durationHrs":4.0,"status":"Complete","boothType":"White","prints":"No","price":500.0,"depositStatus":"Not Required","depositAmount":100.0,"location":"Scottsdale","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Corporate event","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"melissa-hernandez","name":"Melissa Hernandez","phone":"","email":"","date":"2025-04-19","start":"18:00","end":null,"durationHrs":4.0,"status":"Cancelled","boothType":"White","prints":"Yes","price":900.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Laveen AZ","staff":"","equipment":"light pink backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"thiru-thangartahinam","name":"Thiru Thangartahinam","phone":"","email":"","date":"2025-04-19","start":"19:00","end":"22:00","durationHrs":3.0,"status":"Complete","boothType":"360","prints":"No","price":800.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Chandler AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"vida-heers","name":"Vida Heers","phone":"","email":"","date":"2025-04-24","start":"06:30","end":null,"durationHrs":3.0,"status":"Cancelled","boothType":"Both","prints":"No","price":null,"depositStatus":"Not Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Check messages for pricing","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"ryan-lopez","name":"Ryan Lopez","phone":"","email":"","date":"2025-04-25","start":"06:30","end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"Need to find a scrapbook to fill and they are still deciding on Backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"to get","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"keith-d","name":"Keith D","phone":"","email":"","date":"2025-05-04","start":"10:00","end":null,"durationHrs":2.0,"status":"Cancelled","boothType":"White","prints":"Yes","price":400.0,"depositStatus":"Not Required","depositAmount":0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Corporate Office Event","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"kyle-dodaro","name":"Kyle Dodaro","phone":"","email":"","date":"2025-05-08","start":"04:30","end":null,"durationHrs":4.0,"status":"Cancelled","boothType":"White","prints":"Yes","price":750.0,"depositStatus":"Not Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Old money corporate event, will let us know if they want to reserve soon","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"victoria-l","name":"Victoria L","phone":"","email":"","date":"2025-05-17","start":"19:00","end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":450.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"christina-g","name":"Christina G","phone":"","email":"","date":"2025-07-26","start":"07:00","end":null,"durationHrs":2.0,"status":"Cancelled","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Not Sent","depositAmount":100.0,"location":"Glendale AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"sydney-o-neill","name":"Sydney O'neill","phone":"","email":"","date":"2025-08-13","start":"16:00","end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":450.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"karen-perez","name":"Karen Perez","phone":"","email":"","date":"2025-08-16","start":"19:00","end":"22:00","durationHrs":3.0,"status":"Complete","boothType":"White","prints":"No","price":450.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Litchfield AZ","staff":"","equipment":"White backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"no attendant, just camera and digital sharing","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"amy-jones","name":"Amy Jones","phone":"","email":"","date":"2025-08-23","start":null,"end":null,"durationHrs":6.0,"status":"Complete","boothType":"White","prints":"No","price":500.0,"depositStatus":"Not Required","depositAmount":0,"location":"Tempe AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Original time entry was a date value: 2025-10-04 00:00:00 (needs re-entry)","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"erica-barn-on-higley-eve","name":"Erica (Barn on Higley Event","phone":"","email":"","date":"2025-09-20","start":null,"end":null,"durationHrs":3.0,"status":"Complete","boothType":"","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Gilbert AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"ginger-walton","name":"Ginger Walton","phone":"","email":"","date":"2025-09-27","start":null,"end":null,"durationHrs":2.0,"status":"Cancelled","boothType":"Both","prints":"No","price":900.0,"depositStatus":"Not Sent","depositAmount":100.0,"location":"East Mesa","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"kylie","name":"Kylie","phone":"","email":"","date":"2025-09-27","start":null,"end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"lynn-walsh","name":"Lynn Walsh","phone":"","email":"","date":"2025-10-10","start":"10:00","end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Not Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"mary-h","name":"Mary H","phone":"","email":"","date":"2025-10-17","start":null,"end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"","depositAmount":null,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Original time entry was a date value: 2025-06-09 00:00:00 (needs re-entry)","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"mom","name":"Mom","phone":"","email":"","date":"2025-10-24","start":null,"end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":null,"depositStatus":"Not Required","depositAmount":0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Original time entry was a date value: 2025-06-08 00:00:00 (needs re-entry)","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"shannon-chumbley","name":"Shannon Chumbley","phone":"","email":"","date":"2025-11-08","start":null,"end":null,"durationHrs":3.0,"status":"Cancelled","boothType":"White","prints":"Yes","price":600.0,"depositStatus":"Not Sent","depositAmount":100.0,"location":"Phoenix AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"erica-barn-on-higley-eve-2","name":"Erica (Barn on Higley Event","phone":"","email":"","date":"2025-11-15","start":null,"end":null,"durationHrs":null,"status":"Cancelled","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Gilbert AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"nathaniel","name":"Nathaniel","phone":"","email":"","date":"2025-11-15","start":null,"end":null,"durationHrs":3.0,"status":"Complete","boothType":"360","prints":"","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Queen Creek Az","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"lollie-kuhl-sydney-o-set","name":"Lollie Kuhl (Sydney O set up)","phone":"","email":"","date":"2025-12-04","start":null,"end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":400.0,"depositStatus":"Not Required","depositAmount":0,"location":"Phoenix","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Original time entry was a date value: 2025-05-08 00:00:00 (needs re-entry)","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"chantel","name":"Chantel","phone":"","email":"","date":"2025-12-13","start":"17:30","end":"20:30","durationHrs":3.0,"status":"Complete","boothType":"White","prints":"No","price":300.0,"depositStatus":"Not Required","depositAmount":0,"location":"Chandler","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"savannah","name":"Savannah","phone":"","email":"","date":"2025-12-30","start":null,"end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"rhonda","name":"Rhonda","phone":"","email":"","date":"2025-12-31","start":null,"end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Peoria","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Original time entry was a date value: 2025-07-10 00:00:00 (needs re-entry)","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"desiree-thomas","name":"Desiree Thomas","phone":"","email":"","date":"2026-01-17","start":"06:30","end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":625.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Mesa AZ","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Need to get scrap book for the event.","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"luisa-barn-on-higley-eve","name":"Luisa (Barn on Higley Event)","phone":"","email":"","date":"2026-01-24","start":"04:30","end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"The Barn on Higley","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"kylie-2","name":"Kylie 2","phone":"","email":"","date":"2026-02-13","start":null,"end":null,"durationHrs":2.0,"status":"Complete","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Not Required","depositAmount":0,"location":"Phoenix","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Original time entry was a date value: 2026-06-08 00:00:00 (needs re-entry)","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"sierra-owen","name":"Sierra Owen","phone":"","email":"","date":"2026-02-20","start":null,"end":null,"durationHrs":3.0,"status":"Complete","boothType":"White","prints":"No","price":400.0,"depositStatus":"Sent","depositAmount":100.0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Original time entry was a date value: 2026-06-09 00:00:00 (needs re-entry)","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"sasha-santamorena","name":"Sasha Santamorena","phone":"","email":"","date":"2026-03-07","start":"16:30","end":"23:30","durationHrs":7.0,"status":"Reserved","boothType":"White","prints":"No","price":750.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Gilbert","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"(Updated 3/3)","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"quince-barn-on-higley-ev","name":"Quince (Barn on Higley Event)","phone":"","email":"","date":"2026-03-14","start":null,"end":null,"durationHrs":null,"status":"Reserved","boothType":"White","prints":"Yes","price":500.0,"depositStatus":"Sent","depositAmount":100.0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"candice-kinchelow","name":"Candice Kinchelow","phone":"","email":"","date":"2026-03-20","start":null,"end":null,"durationHrs":3.0,"status":"Reserved","boothType":"White","prints":"Yes","price":750.0,"depositStatus":"Not Sent","depositAmount":100.0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"melly-lianna-s-quince","name":"Melly (Lianna's Quince)","phone":"","email":"","date":"2026-05-02","start":"19:00","end":"22:00","durationHrs":null,"status":"Reserved","boothType":"White","prints":"Yes","price":400.0,"depositStatus":"Sent","depositAmount":0,"location":"125 E Commonwealth Ave, Chandler AZ","staff":"","equipment":"White backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"eileen-sweet-16","name":"Eileen (Sweet 16)","phone":"","email":"","date":"2026-05-09","start":"18:30","end":"21:30","durationHrs":3.0,"status":"Reserved","boothType":"White","prints":"Yes","price":450.0,"depositStatus":"Sent","depositAmount":100.0,"location":"Guild of The Vale 200 N Macdonald MEsa AZ 85201","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"andi-grad-party","name":"Andi (Grad Party)","phone":"","email":"","date":"2026-05-23","start":"17:30","end":"20:30","durationHrs":3.0,"status":"Reserved","boothType":"White","prints":"No","price":300.0,"depositStatus":"Sent","depositAmount":100.0,"location":"4186 S Springs Dr. Chandler","staff":"","equipment":"White backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"olivia-birthday-party","name":"Olivia (Birthday party)","phone":"","email":"","date":"2026-06-09","start":"18:30","end":"20:00","durationHrs":1.5,"status":"","boothType":"White","prints":"Yes","price":300.0,"depositStatus":"","depositAmount":100.0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"andi-baby-shower","name":"Andi (baby shower)","phone":"","email":"","date":"2026-06-13","start":"17:30","end":"20:30","durationHrs":3.0,"status":"","boothType":"White","prints":"No","price":300.0,"depositStatus":"","depositAmount":null,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"jackie-duarte","name":"Jackie Duarte","phone":"","email":"","date":"2026-06-27","start":"16:30","end":"19:30","durationHrs":3.0,"status":"","boothType":"White","prints":"Yes","price":550.0,"depositStatus":"","depositAmount":null,"location":"Peoria","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"noelia-wedding","name":"Noelia ( Wedding)","phone":"","email":"","date":"2026-07-31","start":"19:30","end":"22:30","durationHrs":3.0,"status":"Reserved","boothType":"White","prints":"Yes","price":450.0,"depositStatus":"Sent","depositAmount":100.0,"location":"4000 E Palm St, Mesa, AZ 85215","staff":"","equipment":"Gold backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":false,"addedToCalendar":false,"bookedBy":""},{"id":"allie","name":"Allie","phone":"","email":"","date":"2026-09-05","start":"19:30","end":"22:30","durationHrs":null,"status":"","boothType":"","prints":"","price":null,"depositStatus":"","depositAmount":null,"location":"","staff":"","equipment":"Gold backdrop","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"nancy","name":"Nancy","phone":"","email":"","date":"2026-09-13","start":"18:30","end":"21:30","durationHrs":3.0,"status":"","boothType":"White","prints":"No","price":300.0,"depositStatus":"Not Sent","depositAmount":100.0,"location":"Gilbert","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"","needsReview":true,"addedToCalendar":false,"bookedBy":""},{"id":"jennifer-r","name":"Jennifer R","phone":"","email":"","date":null,"start":null,"end":null,"durationHrs":null,"status":"Complete","boothType":"White","prints":"Yes","price":null,"depositStatus":"Not Sent","depositAmount":100.0,"location":"","staff":"","equipment":"","setupTime":"","teardownTime":"","travelDistance":"","notes":"Multi-day event, original date entry: 12/20-21; Original price entry: $400/$800","needsReview":true,"addedToCalendar":false,"bookedBy":""}]</script>
+<script type="application/json" id="event-data">[]</script>
 <script id="app-script">
 (function(){
   "use strict";
@@ -486,11 +494,6 @@
   }
 
   // ---------- building the full replacement document ----------
-  // The page's canonical source is kept as markup already sitting in the
-  // DOM (the <style id="app-style"> and <script id="app-script"> elements),
-  // which the app never mutates at runtime — so reading their textContent
-  // back is safe and avoids hand-duplicating hundreds of lines of CSS/JS
-  // here. Only the event data changes between publishes.
   function buildFullDocument(evList){
     var styleText = document.getElementById("app-style").textContent;
     var scriptText = document.getElementById("app-script").textContent;
@@ -502,6 +505,7 @@
       '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
       "<title>Twist Booking Board</title>\n" +
       '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">\n' +
+      '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"><\/script>\n' +
       '<style id="app-style">' + styleText + closeStyle + "\n" +
       "</head>\n<body>\n" +
       document.getElementById("bodyShell").outerHTML + "\n" +
@@ -541,7 +545,6 @@
   function handlePublishError(err){
     var status = err && err.status;
     if(status === 409){
-      // someone else saved first — pick up the new sha and retry with our data on top
       ghFetchFile(ghConfig).then(function(data){
         ghSha = data.sha;
         performSave();
@@ -567,7 +570,7 @@
     showWriteBanner(true, "Save failed — your last change wasn't saved to GitHub" + (err && err.message ? (": " + err.message) : "") + ".");
   }
 
-  // ---------- render scheduling (don't clobber a field the user is actively editing) ----------
+  // ---------- render scheduling ----------
   function isEditing(){
     var ae = document.activeElement;
     if(!ae || !listEl.contains(ae)) return false;
@@ -597,10 +600,6 @@
       return true;
     });
     out.sort(function(a,b){
-      // Under the "All" chip, lead with what's ahead of you (soonest first)
-      // and put anything already past — done, cancelled, or overdue-and-stale
-      // alike — in a second group after it (most recently past first, so it
-      // reads like a history list). Any other chip is a plain date sort.
       if(filter === "all"){
         var aFuture = !!a.date && a.date >= TODAY;
         var bFuture = !!b.date && b.date >= TODAY;
@@ -699,12 +698,6 @@
   }
 
   // ---------- Google Calendar quick-add ----------
-  // No backend / OAuth here (this page can be shared publicly, so it must
-  // never hold a calendar credential) — instead we build Google's own
-  // "quick add" URL with every field pre-filled. Opening it drops the
-  // viewer straight onto Google Calendar's save screen with nothing left
-  // to type; they still click Save there once, since only Google itself
-  // can write to somebody's calendar.
   function pad2(n){ return String(n).padStart(2,"0"); }
   function addDaysISO(iso, days){
     var d = parseDate(iso);
@@ -838,11 +831,6 @@
   listEl.addEventListener("change", function(e){
     var t = e.target;
     if(t.dataset && t.dataset.field){
-      // Native date/time inputs can fire "change" while a segment (e.g. the
-      // year) is still mid-edit. Only commit once the value is empty
-      // (cleared) or a complete, well-formed date/time — otherwise bail
-      // out without touching state or the DOM, so re-rendering never
-      // yanks focus out from under a keystroke still in progress.
       if(t.type === "date" && t.value !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(t.value)) return;
       if(t.type === "time" && t.value !== "" && !/^\d{2}:\d{2}$/.test(t.value)) return;
 
@@ -850,13 +838,9 @@
       if(t.type === "checkbox") v = t.checked;
       else if(t.type === "number") v = t.value === "" ? null : Number(t.value);
       else v = t.value === "" ? null : t.value;
-      // reflect locally for instant feedback, then persist
       var ev = events.find(function(x){ return x.id === id; });
       if(ev) ev[f] = v;
       scheduleSave();
-      // Selects and checkboxes are single, atomic picks — safe to redraw
-      // right away. Date/time/number/text fields are not: redraw only
-      // once the user is done (scheduleRender defers while still focused).
       if(t.tagName === "SELECT" || t.type === "checkbox") render();
       else scheduleRender();
     }
@@ -942,9 +926,6 @@
     backdrop.classList.remove("open");
     render();
     flushSave();
-    // Pop Google's own pre-filled "save this event" screen for the new
-    // booking. Has to happen synchronously in this click handler or
-    // browsers block it as an unrequested popup.
     var newEventGcalUrl = gcalUrl(data);
     if(newEventGcalUrl) window.open(newEventGcalUrl, "_blank", "noopener");
   });
@@ -971,20 +952,59 @@
     closeConnectModal();
     lockForReadOnly("Not connected — use the ⚙ GitHub button to connect this page to its repo.");
   });
+
+  // Hardcoded encrypted token - replace with your actual encrypted token
+  var ENCRYPTED_TOKEN = "U2FsdGVkX1+3ltDXIy/xaKSMFuOV+ZsLssM099qCbf8er3joJOn4GN9YkWYOpsqNnMy8+tA7vnUsMXDmOj0qO2rr9s8QU5t5dG0CEND3BAprgeUWblfggSK73b1k1Cb1Oz+cslNaRIq1LYh0IEphMw==";
+  var SECRET_KEY = "my-secret-key";
+
+  function decryptToken(encrypted, key) {
+    try {
+      var decrypted = CryptoJS.AES.decrypt(encrypted, key);
+      return decrypted.toString(CryptoJS.enc.Utf8);
+    } catch(e) {
+      console.error("Failed to decrypt token:", e);
+      return null;
+    }
+  }
+
   document.getElementById("connectSave").addEventListener("click", function(){
     var cfg = {
-      owner:  "azoller11",
-      repo: "JoshLauryn",
-      branch: "main",
-      path: "booking-board_3.html",
-      token: CryptoJS.AES.decrypt("U2FsdGVkX1+3ltDXIy/xaKSMFuOV+ZsLssM099qCbf8er3joJOn4GN9YkWYOpsqNnMy8+tA7vnUsMXDmOj0qO2rr9s8QU5t5dG0CEND3BAprgeUWblfggSK73b1k1Cb1Oz+cslNaRIq1LYh0IEphMw==", "my-secret-key").toString(CryptoJS.enc.Utf8)
+      owner: document.getElementById("cfgOwner").value.trim() || "azoller11",
+      repo: document.getElementById("cfgRepo").value.trim() || "JoshLauryn",
+      branch: document.getElementById("cfgBranch").value.trim() || "main",
+      path: document.getElementById("cfgPath").value.trim() || "booking-board_3.html",
+      token: document.getElementById("cfgToken").value.trim() || decryptToken(ENCRYPTED_TOKEN, SECRET_KEY)
     };
-    if(!cfg.owner || !cfg.repo || !cfg.token) return;
+    if(!cfg.owner || !cfg.repo || !cfg.token) {
+      alert("Please fill in all fields or use the hardcoded connection.");
+      return;
+    }
     saveGhConfig(cfg);
     retriedOnce = false;
     closeConnectModal();
     connectAndLoad();
   });
+
+  // ---------- auto-connect on load ----------
+  function autoConnect() {
+    var token = decryptToken(ENCRYPTED_TOKEN, SECRET_KEY);
+    if (!token) {
+      lockForReadOnly("Failed to decrypt token — check the encryption key.");
+      return;
+    }
+    
+    var cfg = {
+      owner: "azoller11",
+      repo: "JoshLauryn",
+      branch: "main",
+      path: "booking-board_3.html",
+      token: token
+    };
+    
+    saveGhConfig(cfg);
+    retriedOnce = false;
+    connectAndLoad();
+  }
 
   // ---------- boot ----------
   function connectAndLoad(){
@@ -1018,6 +1038,9 @@
 
   render(); // draw immediately from the embedded seed data so the page never looks broken
 
-  lockForReadOnly("Not connected — use the ⚙ GitHub button to connect this page to its repo.");
+  // Auto-connect after a short delay to ensure everything is loaded
+  setTimeout(autoConnect, 500);
 })();
 </script>
+</body>
+</html>
