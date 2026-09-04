@@ -77,6 +77,16 @@
     outline:2px solid var(--accent); outline-offset:2px;
   }
 
+  .refresh-btn{
+    background:var(--surface); color:var(--ink); border:1px solid var(--line); padding:10px 16px; border-radius:8px; font-weight:600;
+    cursor:pointer; transition:filter .15s ease, transform .15s ease;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .refresh-btn:hover{filter:brightness(0.95); transform:translateY(-1px);}
+  .refresh-btn:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+  .refresh-btn .spinner{display:inline-block; animation:spin 1s linear infinite;}
+  @keyframes spin{100%{transform:rotate(360deg);}}
+
   .stats{display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; margin-bottom:20px;}
   .stat{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:13px 15px;}
   .stat .n{font-family:"IBM Plex Mono", monospace; font-variant-numeric:tabular-nums; font-size:22px; font-weight:600; line-height:1.1;}
@@ -251,6 +261,7 @@
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
       <button class="btn-secondary" id="settingsBtn" type="button" title="GitHub connection settings">⚙ GitHub</button>
+      <button class="refresh-btn" id="refreshBtn" type="button" title="Refresh data from GitHub">🔄 Refresh</button>
       <button class="add-btn" id="addBtn" type="button">+ Add event</button>
     </div>
   </div>
@@ -329,6 +340,7 @@
   var filter = "all";
   var searchText = "";
   var renderPending = false;
+  var isRefreshing = false;
 
   // ---------- initial data ----------
   var events = [];
@@ -344,15 +356,16 @@
   var saveTimer = null;
   var pendingSave = false;
   var retriedOnce = false;
-  var secretKey = "my-secret-key"; // The key used to encrypt the token
+  var secretKey = "my-secret-key";
 
-  // Hardcoded fallback token (in case key.txt can't be read)
+  // Hardcoded fallback token
   var FALLBACK_ENCRYPTED_TOKEN = "U2FsdGVkX1+3ltDXIy/xaKSMFuOV+ZsLssM099qCbf8er3joJOn4GN9YkWYOpsqNnMy8+tA7vnUsMXDmOj0qO2rr9s8QU5t5dG0CEND3BAprgeUWblfggSK73b1k1Cb1Oz+cslNaRIq1LYh0IEphMw==";
 
   var listEl = document.getElementById("list");
   var statsEl = document.getElementById("stats");
   var countEl = document.getElementById("countLine");
   var addBtn = document.getElementById("addBtn");
+  var refreshBtn = document.getElementById("refreshBtn");
 
   function showWriteBanner(show, message){
     if(message) document.getElementById("writeBannerText").textContent = message;
@@ -363,11 +376,13 @@
     canWrite = false;
     showWriteBanner(true, message || "You're viewing a read-only copy — ask the page owner for edit access to save changes.");
     if(addBtn) addBtn.disabled = true;
+    if(refreshBtn) refreshBtn.disabled = false;
   }
   
   function setCanWrite(){
     canWrite = true;
     if(addBtn) addBtn.disabled = false;
+    if(refreshBtn) refreshBtn.disabled = false;
     showWriteBanner(false);
   }
 
@@ -571,7 +586,6 @@
       return;
     }
     if(status === 404){
-      // Try to create the file
       ghPutFile(ghConfig, null, events, "Create data.json").then(function(result){
         ghSha = result.content && result.content.sha;
         console.log("Created data.json successfully!");
@@ -1004,7 +1018,6 @@
     }
   }
 
-  // Get the fallback token (hardcoded encrypted token)
   function getFallbackToken() {
     return decryptToken(FALLBACK_ENCRYPTED_TOKEN, secretKey);
   }
@@ -1021,7 +1034,6 @@
       return;
     }
     
-    // If token is provided directly in the form, use it
     if(token) {
       var cfg = { owner: owner, repo: repo, branch: branch, path: path, token: token };
       saveGhConfig(cfg);
@@ -1031,7 +1043,6 @@
       return;
     }
     
-    // Otherwise, try the fallback token
     var fallbackToken = getFallbackToken();
     if(fallbackToken) {
       var cfg = { owner: owner, repo: repo, branch: branch, path: path, token: fallbackToken };
@@ -1045,6 +1056,77 @@
     alert("Please enter your GitHub token in the field above.");
   });
 
+  // ---------- Refresh function ----------
+  function refreshData() {
+    if(isRefreshing || !ghConfig) return;
+    
+    isRefreshing = true;
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '⏳ Loading...';
+    
+    console.log("Refreshing data from GitHub...");
+    
+    // Get the current token or fallback
+    var token = ghConfig.token || getFallbackToken();
+    if(!token) {
+      lockForReadOnly("No token available. Please reconnect.");
+      isRefreshing = false;
+      refreshBtn.disabled = false;
+      refreshBtn.innerHTML = '🔄 Refresh';
+      return;
+    }
+    
+    // Update config with token
+    var cfg = {
+      owner: ghConfig.owner,
+      repo: ghConfig.repo,
+      branch: ghConfig.branch || "main",
+      path: ghConfig.path || "data.json",
+      token: token
+    };
+    saveGhConfig(cfg);
+    
+    ghFetchFile(cfg).then(function(data){
+      if(!data){
+        console.log("data.json not found");
+        events = [];
+        ghSha = null;
+        setCanWrite();
+        render();
+        return;
+      }
+      
+      console.log("Successfully fetched data.json from GitHub");
+      ghSha = data.sha;
+      var content = JSON.parse(base64ToUtf8(data.content));
+      if(Array.isArray(content)){
+        events = content;
+        console.log("Loaded", events.length, "events from data.json");
+        // Close any open row since data changed
+        openRowId = null;
+        setCanWrite();
+        render();
+      } else {
+        throw new Error("data.json does not contain an array");
+      }
+    }).catch(function(err){
+      console.error("Failed to refresh data:", err);
+      var status = err && err.status;
+      if(status === 401 || status === 403){
+        lockForReadOnly("This GitHub token can't read this repo — reconnect with a valid token.");
+      } else {
+        showWriteBanner(true, "Failed to refresh data: " + (err.message || "unknown error"));
+      }
+    }).finally(function(){
+      isRefreshing = false;
+      refreshBtn.disabled = false;
+      refreshBtn.innerHTML = '🔄 Refresh';
+    });
+  }
+
+  // Refresh button click handler
+  refreshBtn.addEventListener("click", refreshData);
+
   // ---------- connect and load from GitHub ----------
   function connectAndLoad(){
     if(!ghConfig){
@@ -1052,7 +1134,6 @@
       return;
     }
     
-    // If no token is set, try the fallback
     if(!ghConfig.token) {
       var fallbackToken = getFallbackToken();
       if(fallbackToken) {
@@ -1071,14 +1152,11 @@
       tokenLength: ghConfig.token ? ghConfig.token.length : 0
     });
     
-    // First, try to fetch key.txt to get the encrypted token (if available)
-    // But if we already have a token, we can skip this step
+    // Try to fetch key.txt if we don't have a token yet
     var tokenPromise;
     if(ghConfig.token) {
-      // We already have a token, use it
       tokenPromise = Promise.resolve(ghConfig.token);
     } else {
-      // Try to fetch key.txt
       var keyConfig = {
         owner: ghConfig.owner,
         repo: ghConfig.repo,
@@ -1105,14 +1183,12 @@
           if(data && data.content) {
             var content = base64ToUtf8(data.content);
             var encryptedToken = content.trim();
-            console.log("Successfully fetched key.txt, encrypted token length:", encryptedToken.length);
+            console.log("Successfully fetched key.txt");
             var decrypted = decryptToken(encryptedToken, secretKey);
             if(decrypted) {
               return decrypted;
             }
           }
-          // Fallback to hardcoded token
-          console.log("Using fallback token");
           return getFallbackToken();
         });
       }
@@ -1123,7 +1199,6 @@
         throw new Error("No valid token available");
       }
       
-      // Update config with the token
       var cfg = {
         owner: ghConfig.owner,
         repo: ghConfig.repo,
@@ -1133,11 +1208,9 @@
       };
       saveGhConfig(cfg);
       
-      // Now fetch data.json with the token
       return ghFetchFile(cfg);
     }).then(function(data){
       if(!data){
-        // data.json doesn't exist, create it
         console.log("Creating data.json...");
         return ghPutFile(ghConfig, null, events, "Create data.json").then(function(result){
           ghSha = result.content && result.content.sha;
@@ -1177,7 +1250,6 @@
   function autoConnect() {
     console.log("Auto-connecting to GitHub...");
     
-    // First try to get token from fallback
     var fallbackToken = getFallbackToken();
     
     var cfg = {
@@ -1185,7 +1257,7 @@
       repo: "JoshLauryn",
       branch: "main",
       path: "data.json",
-      token: fallbackToken || "" // Use fallback token if available
+      token: fallbackToken || ""
     };
     
     saveGhConfig(cfg);
