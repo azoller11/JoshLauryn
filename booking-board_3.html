@@ -966,7 +966,7 @@
     document.getElementById("cfgRepo").value = cfg.repo || "JoshLauryn";
     document.getElementById("cfgBranch").value = cfg.branch || "main";
     document.getElementById("cfgPath").value = cfg.path || "booking-board_3.html";
-    document.getElementById("cfgToken").value = cfg.token || "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";
+    document.getElementById("cfgToken").value = cfg.token ? CryptoJS.AES.decrypt("U2FsdGVkX1+HA+auXvF7+GDvUMe5Tg7BTUepXby1Gh7v4mumtYCZODSwbm5Ng4YghQS9KK0Rklyyeg6emHcl+aAG8ZvpfFB5/1hnKJIAKNNBCw+t7bWPLBmG21XOjufo4oKdW/i/3aUg7CfneU90Ug==", "my-secret-key").toString(CryptoJS.enc.Utf8) : "";
     connectBackdrop.classList.add("open");
   }
   function closeConnectModal(){
