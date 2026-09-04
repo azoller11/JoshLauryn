@@ -8,7 +8,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style id="app-style">
   :root{
-    /* Brand palette: Background #1D1D1D · Foreground #EFEAE6 · Accents #B3D6D3 / #C7DDD9 / #DBE3E0 */
     color-scheme: light dark;
     --paper:#EFEAE6; --surface:#FCFAF8; --surface-2:#E7F0EE; --ink:#1D1D1D; --muted:#716C65; --line:#DFD6CB;
     --accent:#3F7C74; --accent-contrast:#F6F3EF; --accent-ink:#2A5650; --accent-soft:#DBE3E0;
@@ -59,7 +58,6 @@
 
   .wrap{max-width:1180px; margin:0 auto; padding:28px 24px 64px;}
 
-  /* ---- Top bar ---- */
   .topbar{display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:22px;}
   .brand{display:flex; align-items:baseline; gap:10px;}
   .brand .mark{
@@ -79,7 +77,6 @@
     outline:2px solid var(--accent); outline-offset:2px;
   }
 
-  /* ---- Stat tiles ---- */
   .stats{display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; margin-bottom:20px;}
   .stat{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:13px 15px;}
   .stat .n{font-family:"IBM Plex Mono", monospace; font-variant-numeric:tabular-nums; font-size:22px; font-weight:600; line-height:1.1;}
@@ -87,7 +84,6 @@
   .stat.warn .n{color:var(--overdue);}
   .stat.flag .n{color:var(--review);}
 
-  /* ---- Controls ---- */
   .controls{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
   .search{
     flex:1 1 220px; background:var(--surface); border:1px solid var(--line); border-radius:8px;
@@ -115,7 +111,6 @@
   }
   .group-divider::after{content:""; flex:1; height:1px; background:var(--line);}
 
-  /* ---- Event list ---- */
   .list{display:flex; flex-direction:column; gap:8px;}
   .event{
     background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--line);
@@ -185,7 +180,6 @@
   .chev{color:var(--muted); transition:transform .15s ease; justify-self:center;}
   .event.open .chev{transform:rotate(90deg);}
 
-  /* ---- Expanded detail ---- */
   .detail{display:none; border-top:1px solid var(--line); padding:16px 18px 18px; background:var(--surface-2); border-radius:0 0 9px 9px;}
   .event.open .detail{display:block;}
   .detail-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:12px 16px;}
@@ -215,7 +209,6 @@
 
   .empty{padding:48px 20px; text-align:center; color:var(--muted);}
 
-  /* ---- Modal ---- */
   .modal-backdrop{position:fixed; inset:0; background:rgba(20,16,22,.5); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto; z-index:20;}
   .modal-backdrop.open{display:flex;}
   .modal{background:var(--surface); border-radius:12px; max-width:640px; width:100%; padding:24px; box-shadow:var(--shadow);}
@@ -263,7 +256,7 @@
   </div>
 
   <div class="status-banner" id="writeBanner">
-    <span id="writeBannerText">Not connected — use the ⚙ GitHub button to connect this page to its repo.</span>
+    <span id="writeBannerText">Connecting to GitHub...</span>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -310,12 +303,12 @@
 <div class="modal-backdrop" id="connectBackdrop">
   <div class="modal">
     <h2>Connect to GitHub</h2>
-    <p style="color:var(--muted); font-size:12.5px; margin:-8px 0 14px;">Saves are committed straight to this file in its GitHub repo — that's what stores the data, no separate database. Use a fine-grained personal access token scoped to just this repo, with Contents: Read and write permission.</p>
+    <p style="color:var(--muted); font-size:12.5px; margin:-8px 0 14px;">Saves are committed to data.json in your GitHub repo.</p>
     <div class="detail-grid">
       <div class="field wide"><label>Repo owner</label><input id="cfgOwner" type="text" placeholder="e.g. azoller11"></div>
       <div class="field wide"><label>Repo name</label><input id="cfgRepo" type="text" placeholder="e.g. JoshLauryn"></div>
       <div class="field"><label>Branch</label><input id="cfgBranch" type="text" value="main"></div>
-      <div class="field wide"><label>File path</label><input id="cfgPath" type="text" value="booking-board_3.html"></div>
+      <div class="field wide"><label>Data file path</label><input id="cfgPath" type="text" value="data.json"></div>
       <div class="field full"><label>Personal access token</label><input id="cfgToken" type="password" placeholder="github_pat_..." autocomplete="off"></div>
     </div>
     <div class="modal-actions">
@@ -344,13 +337,14 @@
     events = seedEl ? (JSON.parse(seedEl.textContent) || []) : [];
   }catch(e){ console.error("failed to parse seed event data", e); events = []; }
 
-  // ---------- save plumbing (commits the whole page back to its own GitHub repo file) ----------
+  // ---------- GitHub save plumbing ----------
   var ghConfig = null;   // {owner, repo, branch, path, token}
-  var ghSha = null;      // sha of the file currently on GitHub; required to write the next version
-  var canWrite = false;  // becomes true once a working GitHub connection is loaded
+  var ghSha = null;      // sha of data.json
+  var canWrite = false;
   var saveTimer = null;
   var pendingSave = false;
   var retriedOnce = false;
+  var secretKey = "my-secret-key"; // The key used to encrypt the token
 
   var listEl = document.getElementById("list");
   var statsEl = document.getElementById("stats");
@@ -361,11 +355,13 @@
     if(message) document.getElementById("writeBannerText").textContent = message;
     document.getElementById("writeBanner").classList.toggle("show", !!show);
   }
+  
   function lockForReadOnly(message){
     canWrite = false;
     showWriteBanner(true, message || "You're viewing a read-only copy — ask the page owner for edit access to save changes.");
     if(addBtn) addBtn.disabled = true;
   }
+  
   function setCanWrite(){
     canWrite = true;
     if(addBtn) addBtn.disabled = false;
@@ -385,22 +381,26 @@
     if(p.length!==3) return null;
     return new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
   }
+  
   function fmtDate(iso){
     var d = parseDate(iso);
     if(!d) return null;
     return { d: (d.getMonth()+1)+"/"+d.getDate()+"/"+String(d.getFullYear()).slice(2), w: d.toLocaleDateString(undefined,{weekday:"short"}) };
   }
+  
   function to12h(hhmm){
     if(!hhmm) return "";
     var parts = hhmm.split(":"); var h = Number(parts[0]), m = parts[1];
     var ap = h>=12 ? "pm":"am"; var h12 = h%12; if(h12===0) h12=12;
     return h12+":"+m+ap;
   }
+  
   function timeRange(ev){
     if(ev.start && ev.end) return to12h(ev.start)+" – "+to12h(ev.end);
     if(ev.start) return to12h(ev.start)+" start";
     return "";
   }
+  
   function durationOf(ev){
     if(ev.start && ev.end){
       var s = ev.start.split(":"), e = ev.end.split(":");
@@ -411,26 +411,32 @@
     if(typeof ev.durationHrs === "number") return ev.durationHrs;
     return null;
   }
+  
   function money(n){
     if(typeof n !== "number" || isNaN(n)) return "—";
     return "$" + n.toLocaleString(undefined,{minimumFractionDigits:0, maximumFractionDigits:2});
   }
+  
   function balanceOf(ev){
     if(typeof ev.price === "number" && typeof ev.depositAmount === "number") return ev.price - ev.depositAmount;
     return null;
   }
+  
   function isOverdue(ev){
     return !!ev.date && ev.date < TODAY && (ev.status === "Reserved" || ev.status === "Inquiry");
   }
+  
   function statusClass(s){
     if(!s) return "blank";
     return s.toLowerCase();
   }
+  
   function esc(s){
     return String(s==null?"":s).replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
     });
   }
+  
   function makeId(){
     return "e" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
   }
@@ -442,23 +448,28 @@
     for(var i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
     return btoa(bin);
   }
+  
   function base64ToUtf8(b64){
     var bin = atob(b64.replace(/\n/g, ""));
     var bytes = new Uint8Array(bin.length);
     for(var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
     return new TextDecoder().decode(bytes);
   }
+  
   function saveGhConfig(cfg){
     ghConfig = cfg;
   }
+  
   function clearGhConfig(){
     ghConfig = null;
     ghSha = null;
   }
+  
   function ghContentsUrl(cfg){
     return "https://api.github.com/repos/" + encodeURIComponent(cfg.owner) + "/" + encodeURIComponent(cfg.repo) +
       "/contents/" + cfg.path.split("/").map(encodeURIComponent).join("/");
   }
+  
   function ghHeaders(cfg, extra){
     var h = {
       "Accept": "application/vnd.github+json",
@@ -468,6 +479,7 @@
     if(extra) for(var k in extra) h[k] = extra[k];
     return h;
   }
+  
   function ghErrorFromResponse(res){
     return res.json().catch(function(){ return null; }).then(function(body){
       var e = new Error((body && body.message) || ("GitHub error " + res.status));
@@ -475,21 +487,29 @@
       return e;
     });
   }
+  
   function ghFetchFile(cfg){
     var url = ghContentsUrl(cfg) + "?ref=" + encodeURIComponent(cfg.branch || "main");
     console.log("Fetching from GitHub:", url);
     return fetch(url, { headers: ghHeaders(cfg) }).then(function(res){
-      if(!res.ok) return ghErrorFromResponse(res).then(function(e){ throw e; });
+      if(!res.ok) {
+        if(res.status === 404){
+          return null;
+        }
+        return ghErrorFromResponse(res).then(function(e){ throw e; });
+      }
       return res.json();
     });
   }
-  function ghPutFile(cfg, sha, html, message){
+  
+  function ghPutFile(cfg, sha, data, message){
+    var content = JSON.stringify(data, null, 2);
     return fetch(ghContentsUrl(cfg), {
       method: "PUT",
       headers: ghHeaders(cfg, {"Content-Type":"application/json"}),
       body: JSON.stringify({
-        message: message || "Update booking board",
-        content: utf8ToBase64(html),
+        message: message || "Update booking data",
+        content: utf8ToBase64(content),
         sha: sha,
         branch: cfg.branch || "main"
       })
@@ -499,63 +519,47 @@
     });
   }
 
-  // ---------- building the full replacement document ----------
-  function buildFullDocument(evList){
-    var styleText = document.getElementById("app-style").textContent;
-    var scriptText = document.getElementById("app-script").textContent;
-    var json = JSON.stringify(evList).replace(/</g, "\\u003c");
-    var closeScript = "<\/script>";
-    var closeStyle = "<\/style>";
-    return "<!doctype html>\n<html>\n<head>\n" +
-      '<meta charset="utf-8">\n' +
-      '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
-      "<title>Twist Booking Board</title>\n" +
-      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">\n' +
-      '<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"><\/script>\n' +
-      '<style id="app-style">' + styleText + closeStyle + "\n" +
-      "</head>\n<body>\n" +
-      document.getElementById("bodyShell").outerHTML + "\n" +
-      '<script type="application/json" id="event-data">' + json + closeScript + "\n" +
-      '<script id="app-script">' + scriptText + closeScript + "\n" +
-      "</body>\n</html>";
-  }
-
   // ---------- scheduling saves ----------
   function performSave(){
     if(!ghConfig || !canWrite) return;
-    var html = buildFullDocument(events);
-    ghPutFile(ghConfig, ghSha, html, "Update booking board (" + events.length + " events)")
+    console.log("Saving", events.length, "events to data.json");
+    ghPutFile(ghConfig, ghSha, events, "Update booking data (" + events.length + " events)")
       .then(function(result){
         ghSha = result.content && result.content.sha;
         retriedOnce = false;
+        console.log("Save successful!");
       })
       .catch(handlePublishError);
   }
+  
   function doSave(){
     saveTimer = null;
     if(!pendingSave) return;
     pendingSave = false;
     performSave();
   }
+  
   function scheduleSave(){
     pendingSave = true;
     if(!ghConfig || !canWrite) return;
     if(saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(doSave, 1500);
   }
+  
   function flushSave(){
     pendingSave = true;
     if(saveTimer){ clearTimeout(saveTimer); saveTimer = null; }
     doSave();
   }
+  
   function handlePublishError(err){
     var status = err && err.status;
     if(status === 409){
       ghFetchFile(ghConfig).then(function(data){
-        ghSha = data.sha;
+        ghSha = data ? data.sha : null;
         performSave();
       }).catch(function(){
-        showWriteBanner(true, "Save failed — another change landed first and this page couldn't refresh. Reload the page and re-apply your edit.");
+        showWriteBanner(true, "Save failed — another change landed first. Reload the page and re-apply your edit.");
       });
       return;
     }
@@ -564,7 +568,14 @@
       return;
     }
     if(status === 404){
-      lockForReadOnly("Couldn't find this file in the repo — check the connection settings.");
+      // Try to create the file
+      ghPutFile(ghConfig, null, events, "Create data.json").then(function(result){
+        ghSha = result.content && result.content.sha;
+        console.log("Created data.json successfully!");
+        setCanWrite();
+      }).catch(function(){
+        lockForReadOnly("Couldn't create data.json — check your permissions.");
+      });
       return;
     }
     if(!retriedOnce){
@@ -583,11 +594,13 @@
     var tag = ae.tagName;
     return tag === "INPUT" || tag === "TEXTAREA" || (tag === "SELECT" && ae.dataset.commitOnBlurOnly === "1");
   }
+  
   function scheduleRender(){
     if(isEditing()){ renderPending = true; return; }
     renderPending = false;
     render();
   }
+  
   listEl.addEventListener("focusout", function(){
     setTimeout(function(){ if(renderPending && !isEditing()) render(); }, 30);
   });
@@ -695,9 +708,11 @@
       '<label>'+esc(label)+'</label>'+inner+
     '</div>';
   }
+  
   function textInput(id, f, val, type){
     return '<input type="'+(type||"text")+'" data-id="'+id+'" data-field="'+f+'" value="'+esc(val==null?"":val)+'">';
   }
+  
   function selectInput(id, f, val, options){
     var opts = [""].concat(options).map(function(o){ return '<option value="'+o+'"'+(val===o?' selected':'')+'>'+(o||"—")+'</option>'; }).join("");
     return '<select data-id="'+id+'" data-field="'+f+'">'+opts+'</select>';
@@ -705,12 +720,14 @@
 
   // ---------- Google Calendar quick-add ----------
   function pad2(n){ return String(n).padStart(2,"0"); }
+  
   function addDaysISO(iso, days){
     var d = parseDate(iso);
     if(!d) return iso;
     d.setDate(d.getDate()+days);
     return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
   }
+  
   function gcalUrl(ev){
     if(!ev || !ev.date) return null;
     var dCompact = ev.date.replace(/-/g,"");
@@ -739,6 +756,7 @@
     });
     return "https://calendar.google.com/calendar/render?" + params.toString();
   }
+  
   function gcalLinkHtml(ev){
     var url = gcalUrl(ev);
     if(!url) return '<span class="gcal-link gcal-link-disabled">Add a date to enable Google Calendar</span>';
@@ -786,7 +804,7 @@
     var vis = visibleEvents();
     countEl.textContent = vis.length + " of " + events.length + " events shown";
     if(vis.length === 0){
-      listEl.innerHTML = '<div class="empty">No events match. Try a different filter or search.</div>';
+      listEl.innerHTML = '<div class="empty">No events found. Click "+ Add event" to get started.</div>';
       return;
     }
     if(filter === "all"){
@@ -851,6 +869,7 @@
       else scheduleRender();
     }
   });
+  
   listEl.addEventListener("blur", function(e){
     var t = e.target;
     if(t.matches && t.matches("input[type=text], input[type=tel], input[type=email], input[type=number], input[type=time], textarea")){
@@ -868,6 +887,7 @@
   document.getElementById("search").addEventListener("input", function(e){
     searchText = e.target.value; render();
   });
+  
   document.getElementById("statusChips").addEventListener("click", function(e){
     var chip = e.target.closest(".chip");
     if(!chip) return;
@@ -881,6 +901,7 @@
   // ---------- add-event modal ----------
   var backdrop = document.getElementById("modalBackdrop");
   var modalGrid = document.getElementById("modalGrid");
+  
   function newEventFormHtml(){
     return field("Client name", '<input type="text" id="m_name">', true) +
       field("Booked by", '<input type="text" id="m_bookedBy" placeholder="Who took this booking">', true) +
@@ -893,14 +914,17 @@
       field("Package price", '<input type="number" id="m_price">') +
       field("Deposit amount", '<input type="number" id="m_deposit">');
   }
+  
   document.getElementById("addBtn").addEventListener("click", function(){
     if(!canWrite) return;
     modalGrid.innerHTML = newEventFormHtml();
     backdrop.classList.add("open");
     document.getElementById("m_name").focus();
   });
+  
   document.getElementById("modalCancel").addEventListener("click", function(){ backdrop.classList.remove("open"); });
   backdrop.addEventListener("click", function(e){ if(e.target === backdrop) backdrop.classList.remove("open"); });
+  
   document.getElementById("modalSave").addEventListener("click", function(){
     if(!canWrite){ backdrop.classList.remove("open"); return; }
     var name = document.getElementById("m_name").value.trim();
@@ -938,36 +962,70 @@
 
   // ---------- GitHub connect modal ----------
   var connectBackdrop = document.getElementById("connectBackdrop");
+  
   function openConnectModal(){
     var cfg = ghConfig || {};
     document.getElementById("cfgOwner").value = cfg.owner || "";
     document.getElementById("cfgRepo").value = cfg.repo || "";
     document.getElementById("cfgBranch").value = cfg.branch || "main";
-    document.getElementById("cfgPath").value = cfg.path || "booking-board_3.html";
+    document.getElementById("cfgPath").value = cfg.path || "data.json";
     document.getElementById("cfgToken").value = "";
     connectBackdrop.classList.add("open");
   }
+  
   function closeConnectModal(){
     connectBackdrop.classList.remove("open");
   }
+  
   var settingsBtn = document.getElementById("settingsBtn");
   if(settingsBtn) settingsBtn.addEventListener("click", openConnectModal);
   document.getElementById("connectCancel").addEventListener("click", closeConnectModal);
+  
   document.getElementById("connectDisconnect").addEventListener("click", function(){
     clearGhConfig();
     closeConnectModal();
     lockForReadOnly("Not connected — use the ⚙ GitHub button to connect this page to its repo.");
   });
 
-  // Hardcoded encrypted token - replace with your actual encrypted token
-  var ENCRYPTED_TOKEN = "U2FsdGVkX1+3ltDXIy/xaKSMFuOV+ZsLssM099qCbf8er3joJOn4GN9YkWYOpsqNnMy8+tA7vnUsMXDmOj0qO2rr9s8QU5t5dG0CEND3BAprgeUWblfggSK73b1k1Cb1Oz+cslNaRIq1LYh0IEphMw==";
-  var SECRET_KEY = "my-secret-key";
+  // ---------- Token management ----------
+  // Read encrypted token from key.txt on GitHub
+  function fetchEncryptedToken() {
+    if(!ghConfig) return Promise.reject(new Error("Not connected to GitHub"));
+    
+    // Create a temporary config for fetching key.txt
+    var keyConfig = {
+      owner: ghConfig.owner,
+      repo: ghConfig.repo,
+      branch: ghConfig.branch || "main",
+      path: "key.txt",
+      token: ghConfig.token
+    };
+    
+    var url = ghContentsUrl(keyConfig) + "?ref=" + encodeURIComponent(keyConfig.branch);
+    console.log("Fetching key.txt from GitHub:", url);
+    
+    return fetch(url, { headers: ghHeaders(keyConfig) }).then(function(res){
+      if(!res.ok) {
+        if(res.status === 404){
+          throw new Error("key.txt not found in the repository. Please create it with your encrypted token.");
+        }
+        return ghErrorFromResponse(res).then(function(e){ throw e; });
+      }
+      return res.json();
+    }).then(function(data){
+      var content = base64ToUtf8(data.content);
+      var token = content.trim();
+      console.log("Successfully fetched key.txt, token length:", token.length);
+      return token;
+    });
+  }
 
   function decryptToken(encrypted, key) {
     try {
       var decrypted = CryptoJS.AES.decrypt(encrypted, key);
       var result = decrypted.toString(CryptoJS.enc.Utf8);
-      console.log("Decryption successful, token length:", result ? result.length : 0);
+      if(!result) throw new Error("Decryption failed - empty result");
+      console.log("Decryption successful, token length:", result.length);
       return result;
     } catch(e) {
       console.error("Failed to decrypt token:", e);
@@ -976,21 +1034,31 @@
   }
 
   document.getElementById("connectSave").addEventListener("click", function(){
-    var cfg = {
-      owner: document.getElementById("cfgOwner").value.trim() || "azoller11",
-      repo: document.getElementById("cfgRepo").value.trim() || "JoshLauryn",
-      branch: document.getElementById("cfgBranch").value.trim() || "main",
-      path: document.getElementById("cfgPath").value.trim() || "booking-board_3.html",
-      token: document.getElementById("cfgToken").value.trim() || decryptToken(ENCRYPTED_TOKEN, SECRET_KEY)
-    };
-    if(!cfg.owner || !cfg.repo || !cfg.token) {
-      alert("Please fill in all fields or use the hardcoded connection.");
+    var owner = document.getElementById("cfgOwner").value.trim() || "azoller11";
+    var repo = document.getElementById("cfgRepo").value.trim() || "JoshLauryn";
+    var branch = document.getElementById("cfgBranch").value.trim() || "main";
+    var path = document.getElementById("cfgPath").value.trim() || "data.json";
+    var token = document.getElementById("cfgToken").value.trim();
+    
+    if(!owner || !repo) {
+      alert("Please fill in repo owner and name.");
       return;
     }
-    saveGhConfig(cfg);
-    retriedOnce = false;
-    closeConnectModal();
-    connectAndLoad();
+    
+    // If token is provided directly in the form, use it
+    if(token) {
+      var cfg = { owner: owner, repo: repo, branch: branch, path: path, token: token };
+      saveGhConfig(cfg);
+      retriedOnce = false;
+      closeConnectModal();
+      connectAndLoad();
+      return;
+    }
+    
+    // Otherwise, try to use the encrypted token from key.txt
+    // First, we need to connect with the token from the form or use a temporary connection
+    // Since we don't have a token yet, we need to use the one from the form or prompt the user
+    alert("Please enter your GitHub token in the field above, or make sure key.txt exists in your repo.");
   });
 
   // ---------- connect and load from GitHub ----------
@@ -999,6 +1067,7 @@
       lockForReadOnly("Not connected — use the ⚙ GitHub button to connect this page to its repo.");
       return;
     }
+    
     console.log("Connecting to GitHub with config:", {
       owner: ghConfig.owner,
       repo: ghConfig.repo,
@@ -1007,29 +1076,66 @@
       tokenLength: ghConfig.token ? ghConfig.token.length : 0
     });
     
-    ghFetchFile(ghConfig).then(function(data){
-      console.log("Successfully fetched file from GitHub");
-      ghSha = data.sha;
-      var html = base64ToUtf8(data.content);
-      var m = html.match(/<script type="application\/json" id="event-data">([\s\S]*?)<\/script>/);
-      if(m){
-        try{ 
-          events = JSON.parse(m[1]) || []; 
-          console.log("Loaded", events.length, "events from GitHub");
-        }
-        catch(e){ console.error("failed to parse event data fetched from GitHub", e); }
+    // First, try to fetch key.txt to get the encrypted token
+    fetchEncryptedToken().then(function(encryptedToken){
+      // Decrypt the token with the secret key
+      var decryptedToken = decryptToken(encryptedToken, secretKey);
+      if(!decryptedToken) {
+        lockForReadOnly("Failed to decrypt token from key.txt. Please check your encryption key.");
+        return;
       }
-      setCanWrite();
-      render();
+      
+      // Update the config with the decrypted token
+      var cfg = {
+        owner: ghConfig.owner,
+        repo: ghConfig.repo,
+        branch: ghConfig.branch,
+        path: ghConfig.path,
+        token: decryptedToken
+      };
+      saveGhConfig(cfg);
+      
+      // Now fetch data.json with the decrypted token
+      return ghFetchFile(cfg);
+    }).then(function(data){
+      if(!data){
+        // data.json doesn't exist, create it
+        console.log("Creating data.json...");
+        return ghPutFile(ghConfig, null, events, "Create data.json").then(function(result){
+          ghSha = result.content && result.content.sha;
+          console.log("Created data.json with", events.length, "events");
+          setCanWrite();
+          render();
+        });
+      }
+      
+      console.log("Successfully fetched data.json from GitHub");
+      ghSha = data.sha;
+      var content = JSON.parse(base64ToUtf8(data.content));
+      if(Array.isArray(content)){
+        events = content;
+        console.log("Loaded", events.length, "events from data.json");
+        setCanWrite();
+        render();
+      } else {
+        throw new Error("data.json does not contain an array");
+      }
     }).catch(function(err){
       console.error("Failed to fetch from GitHub:", err);
       var status = err && err.status;
       if(status === 401 || status === 403){
         lockForReadOnly("This GitHub token can't read this repo — reconnect with a valid token.");
       } else if(status === 404){
-        lockForReadOnly("Couldn't find this file in the repo — check the owner/repo/branch/path in ⚙ GitHub.");
+        // Could be key.txt missing or data.json missing
+        if(err.message && err.message.includes("key.txt")){
+          lockForReadOnly("key.txt not found. Please create key.txt with your encrypted token.");
+        } else {
+          lockForReadOnly("data.json not found — it will be created when you add your first event.");
+          setCanWrite();
+          render();
+        }
       } else {
-        lockForReadOnly("Couldn't reach GitHub to load the latest data — showing the last copy embedded in this page. Error: " + (err.message || "unknown"));
+        lockForReadOnly("Couldn't reach GitHub to load the latest data. Error: " + (err.message || "unknown"));
       }
     });
   }
@@ -1037,18 +1143,14 @@
   // ---------- auto-connect on load ----------
   function autoConnect() {
     console.log("Auto-connecting to GitHub...");
-    var token = decryptToken(ENCRYPTED_TOKEN, SECRET_KEY);
-    if (!token) {
-      lockForReadOnly("Failed to decrypt token — check the encryption key.");
-      return;
-    }
     
+    // Set up the config with the repo info (token will be loaded from key.txt)
     var cfg = {
       owner: "azoller11",
       repo: "JoshLauryn",
       branch: "main",
-      path: "booking-board_3.html",
-      token: token
+      path: "data.json",
+      token: "" // Will be loaded from key.txt
     };
     
     saveGhConfig(cfg);
@@ -1057,7 +1159,7 @@
   }
 
   // ---------- boot ----------
-  render(); // draw immediately from the embedded seed data so the page never looks broken
+  render();
 
   // Auto-connect immediately
   autoConnect();
