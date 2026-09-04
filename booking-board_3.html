@@ -346,6 +346,9 @@
   var retriedOnce = false;
   var secretKey = "my-secret-key"; // The key used to encrypt the token
 
+  // Hardcoded fallback token (in case key.txt can't be read)
+  var FALLBACK_ENCRYPTED_TOKEN = "U2FsdGVkX1+3ltDXIy/xaKSMFuOV+ZsLssM099qCbf8er3joJOn4GN9YkWYOpsqNnMy8+tA7vnUsMXDmOj0qO2rr9s8QU5t5dG0CEND3BAprgeUWblfggSK73b1k1Cb1Oz+cslNaRIq1LYh0IEphMw==";
+
   var listEl = document.getElementById("list");
   var statsEl = document.getElementById("stats");
   var countEl = document.getElementById("countLine");
@@ -988,38 +991,6 @@
   });
 
   // ---------- Token management ----------
-  // Read encrypted token from key.txt on GitHub
-  function fetchEncryptedToken() {
-    if(!ghConfig) return Promise.reject(new Error("Not connected to GitHub"));
-    
-    // Create a temporary config for fetching key.txt
-    var keyConfig = {
-      owner: ghConfig.owner,
-      repo: ghConfig.repo,
-      branch: ghConfig.branch || "main",
-      path: "key.txt",
-      token: ghConfig.token
-    };
-    
-    var url = ghContentsUrl(keyConfig) + "?ref=" + encodeURIComponent(keyConfig.branch);
-    console.log("Fetching key.txt from GitHub:", url);
-    
-    return fetch(url, { headers: ghHeaders(keyConfig) }).then(function(res){
-      if(!res.ok) {
-        if(res.status === 404){
-          throw new Error("key.txt not found in the repository. Please create it with your encrypted token.");
-        }
-        return ghErrorFromResponse(res).then(function(e){ throw e; });
-      }
-      return res.json();
-    }).then(function(data){
-      var content = base64ToUtf8(data.content);
-      var token = content.trim();
-      console.log("Successfully fetched key.txt, token length:", token.length);
-      return token;
-    });
-  }
-
   function decryptToken(encrypted, key) {
     try {
       var decrypted = CryptoJS.AES.decrypt(encrypted, key);
@@ -1031,6 +1002,11 @@
       console.error("Failed to decrypt token:", e);
       return null;
     }
+  }
+
+  // Get the fallback token (hardcoded encrypted token)
+  function getFallbackToken() {
+    return decryptToken(FALLBACK_ENCRYPTED_TOKEN, secretKey);
   }
 
   document.getElementById("connectSave").addEventListener("click", function(){
@@ -1055,10 +1031,18 @@
       return;
     }
     
-    // Otherwise, try to use the encrypted token from key.txt
-    // First, we need to connect with the token from the form or use a temporary connection
-    // Since we don't have a token yet, we need to use the one from the form or prompt the user
-    alert("Please enter your GitHub token in the field above, or make sure key.txt exists in your repo.");
+    // Otherwise, try the fallback token
+    var fallbackToken = getFallbackToken();
+    if(fallbackToken) {
+      var cfg = { owner: owner, repo: repo, branch: branch, path: path, token: fallbackToken };
+      saveGhConfig(cfg);
+      retriedOnce = false;
+      closeConnectModal();
+      connectAndLoad();
+      return;
+    }
+    
+    alert("Please enter your GitHub token in the field above.");
   });
 
   // ---------- connect and load from GitHub ----------
@@ -1066,6 +1050,17 @@
     if(!ghConfig){
       lockForReadOnly("Not connected — use the ⚙ GitHub button to connect this page to its repo.");
       return;
+    }
+    
+    // If no token is set, try the fallback
+    if(!ghConfig.token) {
+      var fallbackToken = getFallbackToken();
+      if(fallbackToken) {
+        ghConfig.token = fallbackToken;
+      } else {
+        lockForReadOnly("No token available. Please enter your GitHub token in the settings.");
+        return;
+      }
     }
     
     console.log("Connecting to GitHub with config:", {
@@ -1076,26 +1071,69 @@
       tokenLength: ghConfig.token ? ghConfig.token.length : 0
     });
     
-    // First, try to fetch key.txt to get the encrypted token
-    fetchEncryptedToken().then(function(encryptedToken){
-      // Decrypt the token with the secret key
-      var decryptedToken = decryptToken(encryptedToken, secretKey);
-      if(!decryptedToken) {
-        lockForReadOnly("Failed to decrypt token from key.txt. Please check your encryption key.");
-        return;
+    // First, try to fetch key.txt to get the encrypted token (if available)
+    // But if we already have a token, we can skip this step
+    var tokenPromise;
+    if(ghConfig.token) {
+      // We already have a token, use it
+      tokenPromise = Promise.resolve(ghConfig.token);
+    } else {
+      // Try to fetch key.txt
+      var keyConfig = {
+        owner: ghConfig.owner,
+        repo: ghConfig.repo,
+        branch: ghConfig.branch || "main",
+        path: "key.txt",
+        token: ghConfig.token || getFallbackToken()
+      };
+      
+      if(!keyConfig.token) {
+        tokenPromise = Promise.reject(new Error("No token available to fetch key.txt"));
+      } else {
+        tokenPromise = fetch(ghContentsUrl(keyConfig) + "?ref=" + encodeURIComponent(keyConfig.branch), { 
+          headers: ghHeaders(keyConfig) 
+        }).then(function(res){
+          if(!res.ok) {
+            if(res.status === 404){
+              console.log("key.txt not found, using fallback token");
+              return getFallbackToken();
+            }
+            return ghErrorFromResponse(res).then(function(e){ throw e; });
+          }
+          return res.json();
+        }).then(function(data){
+          if(data && data.content) {
+            var content = base64ToUtf8(data.content);
+            var encryptedToken = content.trim();
+            console.log("Successfully fetched key.txt, encrypted token length:", encryptedToken.length);
+            var decrypted = decryptToken(encryptedToken, secretKey);
+            if(decrypted) {
+              return decrypted;
+            }
+          }
+          // Fallback to hardcoded token
+          console.log("Using fallback token");
+          return getFallbackToken();
+        });
+      }
+    }
+    
+    tokenPromise.then(function(token){
+      if(!token) {
+        throw new Error("No valid token available");
       }
       
-      // Update the config with the decrypted token
+      // Update config with the token
       var cfg = {
         owner: ghConfig.owner,
         repo: ghConfig.repo,
         branch: ghConfig.branch,
         path: ghConfig.path,
-        token: decryptedToken
+        token: token
       };
       saveGhConfig(cfg);
       
-      // Now fetch data.json with the decrypted token
+      // Now fetch data.json with the token
       return ghFetchFile(cfg);
     }).then(function(data){
       if(!data){
@@ -1126,14 +1164,9 @@
       if(status === 401 || status === 403){
         lockForReadOnly("This GitHub token can't read this repo — reconnect with a valid token.");
       } else if(status === 404){
-        // Could be key.txt missing or data.json missing
-        if(err.message && err.message.includes("key.txt")){
-          lockForReadOnly("key.txt not found. Please create key.txt with your encrypted token.");
-        } else {
-          lockForReadOnly("data.json not found — it will be created when you add your first event.");
-          setCanWrite();
-          render();
-        }
+        lockForReadOnly("data.json not found — it will be created when you add your first event.");
+        setCanWrite();
+        render();
       } else {
         lockForReadOnly("Couldn't reach GitHub to load the latest data. Error: " + (err.message || "unknown"));
       }
@@ -1144,13 +1177,15 @@
   function autoConnect() {
     console.log("Auto-connecting to GitHub...");
     
-    // Set up the config with the repo info (token will be loaded from key.txt)
+    // First try to get token from fallback
+    var fallbackToken = getFallbackToken();
+    
     var cfg = {
       owner: "azoller11",
       repo: "JoshLauryn",
       branch: "main",
       path: "data.json",
-      token: "" // Will be loaded from key.txt
+      token: fallbackToken || "" // Use fallback token if available
     };
     
     saveGhConfig(cfg);
