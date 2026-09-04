@@ -6,6 +6,7 @@
 <title>Twist Booking Board</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style id="app-style">
   :root{
     color-scheme: light dark;
@@ -269,7 +270,7 @@
       </div>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
-      <button class="refresh-btn" id="refreshBtn" type="button" title="Refresh data from GitHub">🔄 Refresh</button>
+      <button class="refresh-btn" id="refreshBtn" type="button" title="Refresh data from Supabase">🔄 Refresh</button>
       <button class="add-btn" id="addBtn" type="button">+ Add event</button>
     </div>
   </div>
@@ -374,6 +375,73 @@
   var countEl = document.getElementById("countLine");
   var addBtn = document.getElementById("addBtn");
   var refreshBtn = document.getElementById("refreshBtn");
+
+  // ---------- Supabase (primary storage) ----------
+  // Fill these in from Project Settings > API in your Supabase dashboard.
+  // The anon key is meant to be public — it's scoped by the RLS policies in supabase-schema.sql,
+  // not hidden like the old GitHub token attempt was.
+  var SUPABASE_URL = "https://vvssidsjesvjjhnnloju.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_xm73PQA66Qw6O2wJatAi2Q_4uXcYQN3";
+  var supabaseClient = (window.supabase && SUPABASE_URL.indexOf("YOUR-PROJECT-REF") === -1)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+  function sbLoadEvents(){
+    if(!supabaseClient){
+      lockForReadOnly("Supabase isn't configured yet — set SUPABASE_URL and SUPABASE_ANON_KEY at the top of the script.");
+      return;
+    }
+    if(isRefreshing) return;
+    isRefreshing = true;
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '⏳ Loading...';
+    supabaseClient.from("events").select("*")
+      .then(function(res){
+        if(res.error) throw res.error;
+        events = res.data || [];
+        openRowId = null;
+        setCanWrite();
+        render();
+      })
+      .catch(function(err){
+        console.error("Failed to load events from Supabase:", err);
+        lockForReadOnly("Couldn't load events from Supabase: " + (err && err.message ? err.message : "unknown error"));
+      })
+      .then(function(){
+        isRefreshing = false;
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '🔄 Refresh';
+      });
+  }
+
+  function sbInsertEvent(data){
+    supabaseClient.from("events").insert(data).then(function(res){
+      if(res.error) throw res.error;
+    }).catch(function(err){
+      console.error("Failed to save new event to Supabase:", err);
+      showWriteBanner(true, "Couldn't save the new event to Supabase: " + (err && err.message ? err.message : "unknown error"));
+    });
+  }
+
+  function sbUpdateField(id, field, value){
+    var patch = {};
+    patch[field] = value;
+    supabaseClient.from("events").update(patch).eq("id", id).then(function(res){
+      if(res.error) throw res.error;
+    }).catch(function(err){
+      console.error("Failed to save change to Supabase:", err);
+      showWriteBanner(true, "Couldn't save your last change to Supabase: " + (err && err.message ? err.message : "unknown error"));
+    });
+  }
+
+  function sbDeleteEvent(id){
+    supabaseClient.from("events").delete().eq("id", id).then(function(res){
+      if(res.error) throw res.error;
+    }).catch(function(err){
+      console.error("Failed to delete event in Supabase:", err);
+      showWriteBanner(true, "Couldn't delete this event in Supabase: " + (err && err.message ? err.message : "unknown error"));
+    });
+  }
 
   function showWriteBanner(show, message){
     if(message) document.getElementById("writeBannerText").textContent = message;
@@ -865,7 +933,7 @@
         events = events.filter(function(x){ return x.id !== id; });
         if(openRowId === id) openRowId = null;
         render();
-        flushSave();
+        sbDeleteEvent(id);
       }
       return;
     }
@@ -889,7 +957,7 @@
       else v = t.value === "" ? null : t.value;
       var ev = events.find(function(x){ return x.id === id; });
       if(ev) ev[f] = v;
-      scheduleSave();
+      sbUpdateField(id, f, v);
       if(t.tagName === "SELECT" || t.type === "checkbox") render();
       else scheduleRender();
     }
@@ -903,7 +971,7 @@
         var v = t.type === "number" ? (t.value === "" ? null : Number(t.value)) : (t.value === "" ? "" : t.value);
         var ev = events.find(function(x){ return x.id === id; });
         if(ev) ev[f] = v;
-        scheduleSave();
+        sbUpdateField(id, f, v);
       }
     }
   }, true);
@@ -980,7 +1048,7 @@
     openRowId = newId;
     backdrop.classList.remove("open");
     render();
-    flushSave();
+    sbInsertEvent(data);
     var newEventGcalUrl = gcalUrl(data);
     if(newEventGcalUrl) window.open(newEventGcalUrl, "_blank", "noopener");
   });
@@ -1133,7 +1201,7 @@
   }
 
   // Refresh button click handler
-  refreshBtn.addEventListener("click", refreshData);
+  refreshBtn.addEventListener("click", sbLoadEvents);
 
   // ---------- connect and load from GitHub ----------
   function connectAndLoad(){
@@ -1276,8 +1344,9 @@
   // ---------- boot ----------
   render();
 
-  // Auto-connect immediately
-  autoConnect();
+  // Load from Supabase immediately.
+  // (The old GitHub auto-connect/save code above is left in place but unused.)
+  sbLoadEvents();
 })();
 </script>
 </body>
