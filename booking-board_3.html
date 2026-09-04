@@ -973,11 +973,11 @@
   });
   document.getElementById("connectSave").addEventListener("click", function(){
     var cfg = {
-      owner: document.getElementById("cfgOwner").value.trim(),
-      repo: document.getElementById("cfgRepo").value.trim(),
-      branch: document.getElementById("cfgBranch").value.trim() || "main",
-      path: document.getElementById("cfgPath").value.trim() || "booking-board_3.html",
-      token: document.getElementById("cfgToken").value.trim()
+      owner:  "azoller11",
+      repo: "JoshLauryn",
+      branch: "main",
+      path: "booking-board_3.html",
+      token: CryptoJS.AES.decrypt("U2FsdGVkX1+3ltDXIy/xaKSMFuOV+ZsLssM099qCbf8er3joJOn4GN9YkWYOpsqNnMy8+tA7vnUsMXDmOj0qO2rr9s8QU5t5dG0CEND3BAprgeUWblfggSK73b1k1Cb1Oz+cslNaRIq1LYh0IEphMw==", "my-secret-key").toString(CryptoJS.enc.Utf8)
     };
     if(!cfg.owner || !cfg.repo || !cfg.token) return;
     saveGhConfig(cfg);
