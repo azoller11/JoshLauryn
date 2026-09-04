@@ -366,6 +366,11 @@
     showWriteBanner(true, message || "You're viewing a read-only copy — ask the page owner for edit access to save changes.");
     if(addBtn) addBtn.disabled = true;
   }
+  function setCanWrite(){
+    canWrite = true;
+    if(addBtn) addBtn.disabled = false;
+    showWriteBanner(false);
+  }
 
   // ---------- helpers ----------
   function todayISO(){
@@ -472,6 +477,7 @@
   }
   function ghFetchFile(cfg){
     var url = ghContentsUrl(cfg) + "?ref=" + encodeURIComponent(cfg.branch || "main");
+    console.log("Fetching from GitHub:", url);
     return fetch(url, { headers: ghHeaders(cfg) }).then(function(res){
       if(!res.ok) return ghErrorFromResponse(res).then(function(e){ throw e; });
       return res.json();
@@ -960,7 +966,9 @@
   function decryptToken(encrypted, key) {
     try {
       var decrypted = CryptoJS.AES.decrypt(encrypted, key);
-      return decrypted.toString(CryptoJS.enc.Utf8);
+      var result = decrypted.toString(CryptoJS.enc.Utf8);
+      console.log("Decryption successful, token length:", result ? result.length : 0);
+      return result;
     } catch(e) {
       console.error("Failed to decrypt token:", e);
       return null;
@@ -985,8 +993,50 @@
     connectAndLoad();
   });
 
+  // ---------- connect and load from GitHub ----------
+  function connectAndLoad(){
+    if(!ghConfig){
+      lockForReadOnly("Not connected — use the ⚙ GitHub button to connect this page to its repo.");
+      return;
+    }
+    console.log("Connecting to GitHub with config:", {
+      owner: ghConfig.owner,
+      repo: ghConfig.repo,
+      branch: ghConfig.branch,
+      path: ghConfig.path,
+      tokenLength: ghConfig.token ? ghConfig.token.length : 0
+    });
+    
+    ghFetchFile(ghConfig).then(function(data){
+      console.log("Successfully fetched file from GitHub");
+      ghSha = data.sha;
+      var html = base64ToUtf8(data.content);
+      var m = html.match(/<script type="application\/json" id="event-data">([\s\S]*?)<\/script>/);
+      if(m){
+        try{ 
+          events = JSON.parse(m[1]) || []; 
+          console.log("Loaded", events.length, "events from GitHub");
+        }
+        catch(e){ console.error("failed to parse event data fetched from GitHub", e); }
+      }
+      setCanWrite();
+      render();
+    }).catch(function(err){
+      console.error("Failed to fetch from GitHub:", err);
+      var status = err && err.status;
+      if(status === 401 || status === 403){
+        lockForReadOnly("This GitHub token can't read this repo — reconnect with a valid token.");
+      } else if(status === 404){
+        lockForReadOnly("Couldn't find this file in the repo — check the owner/repo/branch/path in ⚙ GitHub.");
+      } else {
+        lockForReadOnly("Couldn't reach GitHub to load the latest data — showing the last copy embedded in this page. Error: " + (err.message || "unknown"));
+      }
+    });
+  }
+
   // ---------- auto-connect on load ----------
   function autoConnect() {
+    console.log("Auto-connecting to GitHub...");
     var token = decryptToken(ENCRYPTED_TOKEN, SECRET_KEY);
     if (!token) {
       lockForReadOnly("Failed to decrypt token — check the encryption key.");
@@ -1007,39 +1057,10 @@
   }
 
   // ---------- boot ----------
-  function connectAndLoad(){
-    if(!ghConfig){
-      lockForReadOnly("Not connected — use the ⚙ GitHub button to connect this page to its repo.");
-      return;
-    }
-    ghFetchFile(ghConfig).then(function(data){
-      ghSha = data.sha;
-      var html = base64ToUtf8(data.content);
-      var m = html.match(/<script type="application\/json" id="event-data">([\s\S]*?)<\/script>/);
-      if(m){
-        try{ events = JSON.parse(m[1]) || []; }
-        catch(e){ console.error("failed to parse event data fetched from GitHub", e); }
-      }
-      canWrite = true;
-      if(addBtn) addBtn.disabled = false;
-      showWriteBanner(false);
-      render();
-    }).catch(function(err){
-      var status = err && err.status;
-      if(status === 401 || status === 403){
-        lockForReadOnly("This GitHub token can't read this repo — reconnect with a valid token.");
-      } else if(status === 404){
-        lockForReadOnly("Couldn't find this file in the repo — check the owner/repo/branch/path in ⚙ GitHub.");
-      } else {
-        lockForReadOnly("Couldn't reach GitHub to load the latest data — showing the last copy embedded in this page.");
-      }
-    });
-  }
-
   render(); // draw immediately from the embedded seed data so the page never looks broken
 
-  // Auto-connect after a short delay to ensure everything is loaded
-  setTimeout(autoConnect, 500);
+  // Auto-connect immediately
+  autoConnect();
 })();
 </script>
 </body>
